@@ -1,0 +1,33 @@
+{
+  "name": "@elastic/elasticsearch-mock",
+  "version": "0.1.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "standard && ava -v",
+    "coverage:report": "nyc ava && nyc report --reporter=lcov && echo \"\n==> open coverage/lcov-report/index.html\"",
+    "coverage:check": "nyc ava && nyc check-coverage --branches=100 --lines=100 --functions=100 --statements=100"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/elastic/elasticsearch-js-mock.git"
+  },
+  "keywords": [],
+  "author": "Tomas Della Vedova",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/elastic/elasticsearch-js-mock/issues"
+  },
+  "homepage": "https://github.com/elastic/elasticsearch-js-mock#readme",
+  "devDependencies": {
+    "@elastic/elasticsearch": "^7.7.0-rc.2",
+    "ava": "^3.6.0",
+    "nyc": "^15.0.1",
+    "standard": "^14.3.3"
+  },
+  "dependencies": {
+    "fast-deep-equal": "^3.1.1",
+    "find-my-way": "^2.2.2",
+    "into-stream": "^5.1.1"
+  }
+}
