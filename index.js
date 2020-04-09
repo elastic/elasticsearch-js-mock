@@ -1,3 +1,7 @@
+// Licensed to Elasticsearch B.V under one or more agreements.
+// Elasticsearch B.V licenses this file to you under the Apache 2.0 License.
+// See the LICENSE file in the project root for more information
+
 'use strict'
 
 const { gunzip, createGunzip } = require('zlib')
@@ -7,15 +11,6 @@ const Router = require('find-my-way')
 const intoStream = require('into-stream')
 const equal = require('fast-deep-equal')
 const kRouter = Symbol('elasticsearch-mock-router')
-
-/*
- * Backlog:
- *  - should we provide a default mock for known routes? eg sniff
- *  - support array definitions
- *    eg: add({ method: ['GET', 'POST'], path: ['/1', '/2'] })
- *  - High level API, instead of mocking the http query,
- *    mock the method instead. eg: mock.add({ api: 'indices.delete' })
- */
 
 /* istanbul ignore next */
 const noop = () => {}
