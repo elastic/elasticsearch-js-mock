@@ -3,8 +3,9 @@
   "version": "0.1.0",
   "description": "",
   "main": "index.js",
+  "types": "index.d.ts",
   "scripts": {
-    "test": "standard && ava -v",
+    "test": "standard && ava -v && tsd",
     "coverage:report": "nyc ava && nyc report --reporter=lcov && echo \"\n==> open coverage/lcov-report/index.html\"",
     "coverage:check": "nyc ava && nyc check-coverage --branches=100 --lines=100 --functions=100 --statements=100"
   },
@@ -23,7 +24,8 @@
     "@elastic/elasticsearch": "^7.7.0-rc.2",
     "ava": "^3.6.0",
     "nyc": "^15.0.1",
-    "standard": "^14.3.3"
+    "standard": "^14.3.3",
+    "tsd": "^0.11.0"
   },
   "dependencies": {
     "fast-deep-equal": "^3.1.1",
