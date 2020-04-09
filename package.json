@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "",
   "main": "index.js",
+  "types": "index.d.ts",
   "scripts": {
     "test": "standard && ava -v",
     "coverage:report": "nyc ava && nyc report --reporter=lcov && echo \"\n==> open coverage/lcov-report/index.html\"",

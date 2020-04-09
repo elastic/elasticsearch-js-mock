@@ -1,0 +1,23 @@
+// Licensed to Elasticsearch B.V under one or more agreements.
+// Elasticsearch B.V licenses this file to you under the Apache 2.0 License.
+// See the LICENSE file in the project root for more information
+
+import { Connection } from '@elastic/elasticsearch'
+
+declare class ClientMock {
+  constructor()
+  add(pattern: MockPattern, resolver: ResolverFn): ClientMock
+  get(pattern: MockPattern): ResolverFn | null
+  getConnection(): typeof Connection
+}
+
+export declare type ResolverFn = (params: MockPattern) => Record<string, any> | string
+
+export interface MockPattern {
+  method: string
+  path: string
+  querystring?: Record<string, string>
+  body?: Record<string, any>
+}
+
+export default ClientMock
