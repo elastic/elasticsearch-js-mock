@@ -1,7 +1,7 @@
 {
   "name": "@elastic/elasticsearch-mock",
   "version": "0.1.0",
-  "description": "",
+  "description": "Mock utility for the Elasticsearch's Node.js client",
   "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
@@ -13,7 +13,20 @@
     "type": "git",
     "url": "git+https://github.com/elastic/elasticsearch-js-mock.git"
   },
-  "keywords": [],
+  "keywords": [
+    "elasticsearch",
+    "elastic",
+    "kibana",
+    "mapping",
+    "REST",
+    "search",
+    "client",
+    "index",
+    "mock",
+    "test",
+    "stub",
+    "sinon"
+  ],
   "author": "Tomas Della Vedova",
   "license": "Apache-2.0",
   "bugs": {
