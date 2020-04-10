@@ -14,10 +14,10 @@ declare class ClientMock {
 export declare type ResolverFn = (params: MockPattern) => Record<string, any> | string
 
 export interface MockPattern {
-  method: string
-  path: string
+  method: string | string[]
+  path: string | string[]
   querystring?: Record<string, string>
-  body?: Record<string, any>
+  body?: Record<string, any> | Record<string, any>[]
 }
 
 export default ClientMock
