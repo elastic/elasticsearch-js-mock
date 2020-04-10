@@ -64,6 +64,17 @@ mock.add({
 })
 ```
 
+You can also specify multiple methods and/or paths at the same time:
+```js
+// This mock will catch every search request against any index
+mock.add({
+  method: ['GET', 'POST'],
+  path: ['/_search', '/:index/_search']
+}, () => {
+  return { status: 'ok' }
+})
+```
+
 #### `get`
 
 Returns the matching resolver function for the given pattern, it returns `null` if there is not a matching pattern.
