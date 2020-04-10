@@ -21,6 +21,14 @@ mock.add({
 })
 
 mock.add({
+  method: ['GET', 'POST'],
+  path: ['/_search', '/:index/_search']
+}, params => {
+  expectType<MockPattern>(params)
+  return { status: 'ok' }
+})
+
+mock.add({
   method: 'GET',
   path: '/',
   querystring: { pretty: 'true' }
@@ -34,6 +42,15 @@ mock.add({
   path: '/',
   querystring: { pretty: 'true' },
   body: { foo: 'bar' }
+}, params => {
+  expectType<MockPattern>(params)
+  return { status: 'ok' }
+})
+
+mock.add({
+  method: 'POST',
+  path: '/_bulk',
+  body: [{ foo: 'bar' }]
 }, params => {
   expectType<MockPattern>(params)
   return { status: 'ok' }

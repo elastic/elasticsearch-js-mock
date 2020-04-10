@@ -557,3 +557,110 @@ test('.add should throw if method and path are not defined', async t => {
     t.is(err.message, 'The resolver function is not defined')
   }
 })
+
+test('Define multiple methods at once', async t => {
+  const mock = new Mock()
+  const client = new Client({
+    node: 'http://localhost:9200',
+    Connection: mock.getConnection()
+  })
+
+  mock.add({
+    method: ['GET', 'POST'],
+    path: '/:index/_search'
+  }, () => {
+    return { status: 'ok' }
+  })
+
+  let response = await client.search({
+    index: 'test',
+    q: 'foo:bar'
+  })
+  t.deepEqual(response.body, { status: 'ok' })
+  t.is(response.statusCode, 200)
+
+  response = await client.search({
+    index: 'test',
+    body: {
+      query: { match: { foo: 'bar' } }
+    }
+  })
+  t.deepEqual(response.body, { status: 'ok' })
+  t.is(response.statusCode, 200)
+})
+
+test('Define multiple paths at once', async t => {
+  const mock = new Mock()
+  const client = new Client({
+    node: 'http://localhost:9200',
+    Connection: mock.getConnection()
+  })
+
+  mock.add({
+    method: 'GET',
+    path: ['/test1/_search', '/test2/_search']
+  }, () => {
+    return { status: 'ok' }
+  })
+
+  let response = await client.search({
+    index: 'test1',
+    q: 'foo:bar'
+  })
+  t.deepEqual(response.body, { status: 'ok' })
+  t.is(response.statusCode, 200)
+
+  response = await client.search({
+    index: 'test2',
+    q: 'foo:bar'
+  })
+  t.deepEqual(response.body, { status: 'ok' })
+  t.is(response.statusCode, 200)
+})
+
+test('Define multiple paths and method at once', async t => {
+  const mock = new Mock()
+  const client = new Client({
+    node: 'http://localhost:9200',
+    Connection: mock.getConnection()
+  })
+
+  mock.add({
+    method: ['GET', 'POST'],
+    path: ['/test1/_search', '/test2/_search']
+  }, () => {
+    return { status: 'ok' }
+  })
+
+  let response = await client.search({
+    index: 'test1',
+    q: 'foo:bar'
+  })
+  t.deepEqual(response.body, { status: 'ok' })
+  t.is(response.statusCode, 200)
+
+  response = await client.search({
+    index: 'test2',
+    q: 'foo:bar'
+  })
+  t.deepEqual(response.body, { status: 'ok' })
+  t.is(response.statusCode, 200)
+
+  response = await client.search({
+    index: 'test1',
+    body: {
+      query: { match: { foo: 'bar' } }
+    }
+  })
+  t.deepEqual(response.body, { status: 'ok' })
+  t.is(response.statusCode, 200)
+
+  response = await client.search({
+    index: 'test2',
+    body: {
+      query: { match: { foo: 'bar' } }
+    }
+  })
+  t.deepEqual(response.body, { status: 'ok' })
+  t.is(response.statusCode, 200)
+})
