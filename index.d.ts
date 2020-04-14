@@ -7,17 +7,25 @@ import { Connection } from '@elastic/elasticsearch'
 declare class ClientMock {
   constructor()
   add(pattern: MockPattern, resolver: ResolverFn): ClientMock
-  get(pattern: MockPattern): ResolverFn | null
+  get(pattern: MockPatternHTTP): ResolverFn | null
   getConnection(): typeof Connection
 }
 
-export declare type ResolverFn = (params: MockPattern) => Record<string, any> | string
+export declare type ResolverFn = (params: MockPatternHTTP) => Record<string, any> | string
 
-export interface MockPattern {
+export interface MockPatternHTTP {
   method: string | string[]
   path: string | string[]
   querystring?: Record<string, string>
-  body?: Record<string, any> | Record<string, any>[]
+  body?: Record<string, any>
 }
+
+export interface MockPatternAPI {
+  api: string
+  querystring?: Record<string, string>
+  body?: Record<string, any>
+}
+
+export type MockPattern = MockPatternHTTP | MockPatternAPI
 
 export default ClientMock
