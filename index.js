@@ -28,6 +28,15 @@ class Mocker {
   }
 
   add (pattern, fn) {
+    for (const key of ['method', 'path']) {
+      if (Array.isArray(pattern[key])) {
+        for (const value of pattern[key]) {
+          this.add({ ...pattern, [key]: value }, fn)
+        }
+        return this
+      }
+    }
+
     if (typeof pattern.method !== 'string') throw new ConfigurationError('The method is not defined')
     if (typeof pattern.path !== 'string') throw new ConfigurationError('The path is not defined')
     if (typeof fn !== 'function') throw new ConfigurationError('The resolver function is not defined')
