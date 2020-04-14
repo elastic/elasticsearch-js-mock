@@ -556,6 +556,14 @@ test('.add should throw if method and path are not defined', async t => {
     t.true(err instanceof errors.ConfigurationError)
     t.is(err.message, 'The resolver function is not defined')
   }
+
+  try {
+    mock.add({ api: 'ifno' })
+    t.fail('Should throw')
+  } catch (err) {
+    t.true(err instanceof errors.ConfigurationError)
+    t.is(err.message, "The api 'ifno' does not exist")
+  }
 })
 
 test('Define multiple methods at once', async t => {
@@ -663,4 +671,109 @@ test('Define multiple paths and method at once', async t => {
   })
   t.deepEqual(response.body, { status: 'ok' })
   t.is(response.statusCode, 200)
+})
+
+test('High level mock', async t => {
+  const mock = new Mock()
+  const client = new Client({
+    node: 'http://localhost:9200',
+    Connection: mock.getConnection()
+  })
+
+  mock.add({
+    api: 'info'
+  }, () => {
+    return { status: 'ok' }
+  })
+
+  const response = await client.info()
+  t.deepEqual(response.body, { status: 'ok' })
+  t.is(response.statusCode, 200)
+})
+
+test('High level mock with dynamic url', async t => {
+  const mock = new Mock()
+  const client = new Client({
+    node: 'http://localhost:9200',
+    Connection: mock.getConnection()
+  })
+
+  mock.add({
+    api: 'search'
+  }, () => {
+    return {
+      hits: {
+        total: { value: 1, relation: 'eq' },
+        hits: [{ _source: { baz: 'faz' } }]
+      }
+    }
+  })
+
+  const response = await client.search({
+    index: 'test',
+    body: { query: { match_all: {} } }
+  })
+
+  t.deepEqual(response.body, {
+    hits: {
+      total: { value: 1, relation: 'eq' },
+      hits: [{ _source: { baz: 'faz' } }]
+    }
+  })
+  t.is(response.statusCode, 200)
+})
+
+test('High level mock granularity', async t => {
+  const mock = new Mock()
+  const client = new Client({
+    node: 'http://localhost:9200',
+    Connection: mock.getConnection()
+  })
+
+  mock.add({
+    api: 'search'
+  }, () => {
+    return {
+      hits: {
+        total: { value: 1, relation: 'eq' },
+        hits: [{ _source: { baz: 'faz' } }]
+      }
+    }
+  })
+
+  mock.add({
+    api: 'search',
+    body: { query: { match: { foo: 'bar' } } }
+  }, () => {
+    return {
+      hits: {
+        total: { value: 0, relation: 'eq' },
+        hits: []
+      }
+    }
+  })
+
+  let response = await client.search({
+    index: 'test',
+    body: { query: { match_all: {} } }
+  })
+
+  t.deepEqual(response.body, {
+    hits: {
+      total: { value: 1, relation: 'eq' },
+      hits: [{ _source: { baz: 'faz' } }]
+    }
+  })
+
+  response = await client.search({
+    index: 'test',
+    body: { query: { match: { foo: 'bar' } } }
+  })
+
+  t.deepEqual(response.body, {
+    hits: {
+      total: { value: 0, relation: 'eq' },
+      hits: []
+    }
+  })
 })
