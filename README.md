@@ -71,7 +71,33 @@ mock.add({
   method: ['GET', 'POST'],
   path: ['/_search', '/:index/_search']
 }, () => {
-  return { status: 'ok' }
+  return {
+    hits: {
+      total: { value: 0, relation: 'eq' },
+      hits: []
+    }
+  }
+})
+```
+
+Finally, you can specify the API to mock with the `api` key, but be aware that if you specify the `api` instead of
+`path` and `method`, you will not be able to differentiate between dynamic paths and API with multiple methods,
+unless you use the parameters provided in the resolver function.
+
+**Note:** When using this mock pattern, only Elasticsearch v7 is supported.
+
+```js
+// This mock will catch every search request against any index
+mock.add({
+  api: 'search'
+}, params => {
+  console.log(params)
+  return {
+    hits: {
+      total: { value: 0, relation: 'eq' },
+      hits: []
+    }
+  }
 })
 ```
 
@@ -105,12 +131,20 @@ const client = new Client({
 
 A pattern is an object that describes an http query to Elasticsearch, and it looks like this:
 ```ts
-interface MockPattern {
-  method: string
-  path: string
+interface MockPatternHTTP {
+  method: string | string[]
+  path: string | string[]
   querystring?: Record<string, string>
   body?: Record<string, any>
 }
+
+interface MockPatternAPI {
+  api: string
+  querystring?: Record<string, string>
+  body?: Record<string, any>
+}
+
+type MockPattern = MockPatternHTTP | MockPatternAPI
 ```
 
 The more field you specify, the more the mock will be strict, for example:
