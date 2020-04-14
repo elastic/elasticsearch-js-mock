@@ -777,3 +777,29 @@ test('High level mock granularity', async t => {
     }
   })
 })
+
+test('High level mock, discriminate by querystring', async t => {
+  const mock = new Mock()
+  const client = new Client({
+    node: 'http://localhost:9200',
+    Connection: mock.getConnection()
+  })
+
+  mock.add({
+    api: 'info',
+    querystring: { pretty: 'true' }
+  }, () => {
+    return { status: 'not ok' }
+  })
+
+  mock.add({
+    api: 'info',
+    querystring: { human: 'true' }
+  }, () => {
+    return { status: 'ok' }
+  })
+
+  const response = await client.info({ human: true })
+  t.deepEqual(response.body, { status: 'ok' })
+  t.is(response.statusCode, 200)
+})
