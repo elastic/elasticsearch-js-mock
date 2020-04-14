@@ -4,7 +4,7 @@
 
 import { expectType, expectError } from 'tsd'
 import { Client } from '@elastic/elasticsearch'
-import Mock, { MockPattern } from './'
+import Mock, { MockPatternHTTP } from './'
 
 const mock = new Mock()
 const client = new Client({
@@ -16,7 +16,7 @@ mock.add({
   method: 'GET',
   path: '/'
 }, params => {
-  expectType<MockPattern>(params)
+  expectType<MockPatternHTTP>(params)
   return { status: 'ok' }
 })
 
@@ -24,7 +24,7 @@ mock.add({
   method: ['GET', 'POST'],
   path: ['/_search', '/:index/_search']
 }, params => {
-  expectType<MockPattern>(params)
+  expectType<MockPatternHTTP>(params)
   return { status: 'ok' }
 })
 
@@ -33,7 +33,7 @@ mock.add({
   path: '/',
   querystring: { pretty: 'true' }
 }, params => {
-  expectType<MockPattern>(params)
+  expectType<MockPatternHTTP>(params)
   return { status: 'ok' }
 })
 
@@ -43,7 +43,7 @@ mock.add({
   querystring: { pretty: 'true' },
   body: { foo: 'bar' }
 }, params => {
-  expectType<MockPattern>(params)
+  expectType<MockPatternHTTP>(params)
   return { status: 'ok' }
 })
 
@@ -52,7 +52,7 @@ mock.add({
   path: '/_bulk',
   body: [{ foo: 'bar' }]
 }, params => {
-  expectType<MockPattern>(params)
+  expectType<MockPatternHTTP>(params)
   return { status: 'ok' }
 })
 
@@ -60,7 +60,30 @@ mock.add({
   method: 'GET',
   path: '/'
 }, params => {
-  expectType<MockPattern>(params)
+  expectType<MockPatternHTTP>(params)
+  return 'ok'
+})
+
+mock.add({
+  api: 'info'
+}, params => {
+  expectType<MockPatternHTTP>(params)
+  return 'ok'
+})
+
+mock.add({
+  api: 'info',
+  querystring: { pretty: 'true' }
+}, params => {
+  expectType<MockPatternHTTP>(params)
+  return 'ok'
+})
+
+mock.add({
+  api: 'search',
+  body: { query: { match: { foo: 'bar' } } }
+}, params => {
+  expectType<MockPatternHTTP>(params)
   return 'ok'
 })
 

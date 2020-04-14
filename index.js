@@ -10,7 +10,9 @@ const { Connection, errors } = require('@elastic/elasticsearch')
 const Router = require('find-my-way')
 const intoStream = require('into-stream')
 const equal = require('fast-deep-equal')
+
 const kRouter = Symbol('elasticsearch-mock-router')
+const pathsDb = require('./paths.json')
 
 /* istanbul ignore next */
 const noop = () => {}
@@ -28,6 +30,15 @@ class Mocker {
   }
 
   add (pattern, fn) {
+    if (pattern.api) {
+      const api = pathsDb[pattern.api]
+      if (!api) throw new ConfigurationError(`The api '${pattern.api}' does not exist`)
+      const apiPattern = { path: api.path, method: api.method }
+      if (pattern.body) apiPattern.body = pattern.body
+      if (pattern.querystring) apiPattern.querystring = pattern.querystring
+      return this.add(apiPattern, fn)
+    }
+
     for (const key of ['method', 'path']) {
       if (Array.isArray(pattern[key])) {
         for (const value of pattern[key]) {
