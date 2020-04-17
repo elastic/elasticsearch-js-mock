@@ -155,6 +155,7 @@ function normalizeParams (params, callback) {
   }
 
   const compression = params.headers['Content-Encoding'] === 'gzip'
+  const type = params.headers['Content-Type'] || ''
 
   if (isStream(params.body)) {
     normalized.body = ''
@@ -163,7 +164,9 @@ function normalizeParams (params, callback) {
     stream.on('error', err => callback(err, null))
     stream.on('data', chunk => { normalized.body += chunk })
     stream.on('end', () => {
-      normalized.body = JSON.parse(normalized.body)
+      normalized.body = type.includes('x-ndjson')
+        ? normalized.body.split(/\n|\n\r/).filter(Boolean).map(l => JSON.parse(l))
+        : JSON.parse(normalized.body)
       callback(null, normalized)
     })
   } else if (params.body) {
@@ -173,11 +176,16 @@ function normalizeParams (params, callback) {
         if (err) {
           return callback(err, null)
         }
-        normalized.body = JSON.parse(buffer)
+        buffer = buffer.toString()
+        normalized.body = type.includes('x-ndjson')
+          ? buffer.split(/\n|\n\r/).filter(Boolean).map(l => JSON.parse(l))
+          : JSON.parse(buffer)
         callback(null, normalized)
       })
     } else {
-      normalized.body = JSON.parse(params.body)
+      normalized.body = type.includes('x-ndjson')
+        ? params.body.split(/\n|\n\r/).filter(Boolean).map(l => JSON.parse(l))
+        : JSON.parse(params.body)
       setImmediate(callback, null, normalized)
     }
   } else {
