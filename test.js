@@ -664,3 +664,117 @@ test('Define multiple paths and method at once', async t => {
   t.deepEqual(response.body, { status: 'ok' })
   t.is(response.statusCode, 200)
 })
+
+test('ndjson API support', async t => {
+  const mock = new Mock()
+  const client = new Client({
+    node: 'http://localhost:9200',
+    Connection: mock.getConnection()
+  })
+
+  mock.add({
+    method: 'POST',
+    path: '/_bulk'
+  }, params => {
+    t.deepEqual(params.body, [
+      { foo: 'bar' },
+      { baz: 'fa\nz' }
+    ])
+    return { status: 'ok' }
+  })
+
+  const response = await client.bulk({
+    body: [
+      { foo: 'bar' },
+      { baz: 'fa\nz' }
+    ]
+  })
+  t.deepEqual(response.body, { status: 'ok' })
+  t.is(response.statusCode, 200)
+})
+
+test('ndjson API support (with compression)', async t => {
+  const mock = new Mock()
+  const client = new Client({
+    node: 'http://localhost:9200',
+    Connection: mock.getConnection(),
+    compression: 'gzip'
+  })
+
+  mock.add({
+    method: 'POST',
+    path: '/_bulk'
+  }, params => {
+    t.deepEqual(params.body, [
+      { foo: 'bar' },
+      { baz: 'fa\nz' }
+    ])
+    return { status: 'ok' }
+  })
+
+  const response = await client.bulk({
+    body: [
+      { foo: 'bar' },
+      { baz: 'fa\nz' }
+    ]
+  })
+  t.deepEqual(response.body, { status: 'ok' })
+  t.is(response.statusCode, 200)
+})
+
+test('ndjson API support (as stream)', async t => {
+  const mock = new Mock()
+  const client = new Client({
+    node: 'http://localhost:9200',
+    Connection: mock.getConnection()
+  })
+
+  mock.add({
+    method: 'POST',
+    path: '/_bulk'
+  }, params => {
+    t.deepEqual(params.body, [
+      { foo: 'bar' },
+      { baz: 'fa\nz' }
+    ])
+    return { status: 'ok' }
+  })
+
+  const response = await client.bulk({
+    body: intoStream(client.serializer.ndserialize([
+      { foo: 'bar' },
+      { baz: 'fa\nz' }
+    ]))
+  })
+  t.deepEqual(response.body, { status: 'ok' })
+  t.is(response.statusCode, 200)
+})
+
+test('ndjson API support (as stream with compression)', async t => {
+  const mock = new Mock()
+  const client = new Client({
+    node: 'http://localhost:9200',
+    Connection: mock.getConnection(),
+    compression: 'gzip'
+  })
+
+  mock.add({
+    method: 'POST',
+    path: '/_bulk'
+  }, params => {
+    t.deepEqual(params.body, [
+      { foo: 'bar' },
+      { baz: 'fa\nz' }
+    ])
+    return { status: 'ok' }
+  })
+
+  const response = await client.bulk({
+    body: intoStream(client.serializer.ndserialize([
+      { foo: 'bar' },
+      { baz: 'fa\nz' }
+    ]))
+  })
+  t.deepEqual(response.body, { status: 'ok' })
+  t.is(response.statusCode, 200)
+})
