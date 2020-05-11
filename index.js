@@ -154,8 +154,8 @@ function normalizeParams (params, callback) {
     querystring: { ...querystring.parse(params.querystring) }
   }
 
-  const compression = params.headers['Content-Encoding'] === 'gzip'
-  const type = params.headers['Content-Type'] || ''
+  const compression = (params.headers['Content-Encoding'] || params.headers['content-encoding']) === 'gzip'
+  const type = params.headers['Content-Type'] || params.headers['content-type'] || ''
 
   if (isStream(params.body)) {
     normalized.body = ''
