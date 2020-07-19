@@ -818,6 +818,26 @@ test('Should clear individual mocks', async t => {
   }
 })
 
+test('.mock should throw if method and path are not defined', async t => {
+  const mock = new Mock()
+
+  try {
+    mock.clear({ path: '/' }, () => {})
+    t.fail('Should throw')
+  } catch (err) {
+    t.true(err instanceof errors.ConfigurationError)
+    t.is(err.message, 'The method is not defined')
+  }
+
+  try {
+    mock.clear({ method: 'GET' }, () => {})
+    t.fail('Should throw')
+  } catch (err) {
+    t.true(err instanceof errors.ConfigurationError)
+    t.is(err.message, 'The path is not defined')
+  }
+})
+
 test('Should clear all mocks', async t => {
   const mock = new Mock()
   const client = new Client({
