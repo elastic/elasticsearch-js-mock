@@ -76,6 +76,26 @@ class Mocker {
     return null
   }
 
+  clear (pattern) {
+    for (const key of ['method', 'path']) {
+      if (Array.isArray(pattern[key])) {
+        for (const value of pattern[key]) {
+          this.clear({ ...pattern, [key]: value })
+        }
+        return this
+      }
+    }
+
+    if (typeof pattern.method !== 'string') throw new ConfigurationError('The method is not defined')
+    if (typeof pattern.path !== 'string') throw new ConfigurationError('The path is not defined')
+
+    this[kRouter].off(pattern.method, pattern.path)
+  }
+
+  clearAll () {
+    this[kRouter].reset()
+  }
+
   getConnection () {
     return buildConnectionClass(this)
   }
