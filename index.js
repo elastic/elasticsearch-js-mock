@@ -90,10 +90,12 @@ class Mocker {
     if (typeof pattern.path !== 'string') throw new ConfigurationError('The path is not defined')
 
     this[kRouter].off(pattern.method, pattern.path)
+    return this
   }
 
   clearAll () {
     this[kRouter].reset()
+    return this
   }
 
   getConnection () {

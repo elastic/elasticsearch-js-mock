@@ -8,8 +8,8 @@ declare class ClientMock {
   constructor()
   add(pattern: MockPattern, resolver: ResolverFn): ClientMock
   get(pattern: MockPattern): ResolverFn | null
-  clear(pattern: Pick<MockPattern, 'method' | 'path'>): void
-  clearAll(): void
+  clear(pattern: Pick<MockPattern, 'method' | 'path'>): ClientMock
+  clearAll(): ClientMock
   getConnection(): typeof Connection
 }
 
