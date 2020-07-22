@@ -86,6 +86,25 @@ const fn = mock.get({
 })
 ```
 
+#### `clear`
+
+Clears/removes mocks for specific route(s).
+
+```js
+mock.clear({
+  method: ['GET'],
+  path: ['/_search', '/:index/_search']
+})
+```
+
+#### `clearAll`
+
+Clears all mocks.
+
+```js
+mock.clearAll()
+```
+
 #### `getConnection`
 
 Returns a custom `Connection` class that you **must** pass to the Elasticsearch client instance.

@@ -778,3 +778,103 @@ test('ndjson API support (as stream with compression)', async t => {
   t.deepEqual(response.body, { status: 'ok' })
   t.is(response.statusCode, 200)
 })
+
+test('Should clear individual mocks', async t => {
+  const mock = new Mock()
+  const client = new Client({
+    node: 'http://localhost:9200',
+    Connection: mock.getConnection()
+  })
+
+  mock.add({
+    method: 'GET',
+    path: ['/test1/_search', '/test2/_search']
+  }, () => {
+    return { status: 'ok' }
+  })
+
+  // Clear test1 but not test2
+  mock.clear({ method: 'GET', path: ['/test1/_search'] })
+
+  // test2 still works
+  const response = await client.search({
+    index: 'test2',
+    q: 'foo:bar'
+  })
+  t.deepEqual(response.body, { status: 'ok' })
+  t.is(response.statusCode, 200)
+
+  // test1 does not
+  try {
+    await client.search({
+      index: 'test1',
+      q: 'foo:bar'
+    })
+    t.fail('Should throw')
+  } catch (err) {
+    t.true(err instanceof errors.ResponseError)
+    t.deepEqual(err.body, { error: 'Mock not found' })
+    t.is(err.statusCode, 404)
+  }
+})
+
+test('.mock should throw if method and path are not defined', async t => {
+  const mock = new Mock()
+
+  try {
+    mock.clear({ path: '/' }, () => {})
+    t.fail('Should throw')
+  } catch (err) {
+    t.true(err instanceof errors.ConfigurationError)
+    t.is(err.message, 'The method is not defined')
+  }
+
+  try {
+    mock.clear({ method: 'GET' }, () => {})
+    t.fail('Should throw')
+  } catch (err) {
+    t.true(err instanceof errors.ConfigurationError)
+    t.is(err.message, 'The path is not defined')
+  }
+})
+
+test('Should clear all mocks', async t => {
+  const mock = new Mock()
+  const client = new Client({
+    node: 'http://localhost:9200',
+    Connection: mock.getConnection()
+  })
+
+  mock.add({
+    method: 'GET',
+    path: ['/test1/_search', '/test2/_search']
+  }, () => {
+    return { status: 'ok' }
+  })
+
+  // Clear mocks
+  mock.clearAll()
+
+  try {
+    await client.search({
+      index: 'test1',
+      q: 'foo:bar'
+    })
+    t.fail('Should throw')
+  } catch (err) {
+    t.true(err instanceof errors.ResponseError)
+    t.deepEqual(err.body, { error: 'Mock not found' })
+    t.is(err.statusCode, 404)
+  }
+  try {
+    await client.search({
+      index: 'test2',
+      q: 'foo:bar'
+    })
+    t.fail('Should throw')
+  } catch (err) {
+    t.true(err instanceof errors.ResponseError)
+    t.deepEqual(err.body, { error: 'Mock not found' })
+    t.is(err.statusCode, 404)
+  }
+})
