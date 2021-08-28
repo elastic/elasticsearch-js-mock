@@ -106,7 +106,7 @@ class Mocker {
 function buildConnectionClass (mocker) {
   class MockConnection extends Connection {
     request (params, callback) {
-      var aborted = false
+      let aborted = false
       normalizeParams(params, prepareResponse)
 
       function prepareResponse (error, params) {
@@ -118,15 +118,38 @@ function buildConnectionClass (mocker) {
           return callback(new ConnectionError(error.message), null)
         }
 
-        var stream = null
-        var payload = ''
-        var statusCode = 200
+        let stream = null
+        let payload = ''
+        let statusCode = 200
 
         const resolver = mocker.get(params)
+        console.log(params, resolver)
+
         if (resolver === null) {
-          payload = { error: 'Mock not found' }
+          // return info route for product check unless configured otherwise
+          if (params.method === 'GET' && params.path === '/') {
+            payload = {
+              name: 'name',
+              cluster_name: 'cluster_name',
+              cluster_uuid: 'cluster_uuid',
+              version: {
+                number: '8.0.0-SNAPSHOT',
+                build_flavor: 'default',
+                build_type: 'docker',
+                build_hash: 'build_hash',
+                build_date: 'build_date',
+                build_snapshot: true,
+                lucene_version: '8.9.0',
+                minimum_wire_compatibility_version: '7.15.0',
+                minimum_index_compatibility_version: '7.0.0'
+              },
+              tagline: 'You Know, for Search'
+            }
+          } else {
+            payload = { error: 'Mock not found' }
+            statusCode = 404
+          }
           stream = intoStream(JSON.stringify(payload))
-          statusCode = 404
         } else {
           payload = resolver(params)
           if (payload instanceof ResponseError) {
@@ -147,6 +170,7 @@ function buildConnectionClass (mocker) {
             : 'application/json;utf=8',
           date: new Date().toISOString(),
           connection: 'keep-alive',
+          'x-elastic-product': 'Elasticsearch',
           'content-length': Buffer.byteLength(
             typeof payload === 'string' ? payload : JSON.stringify(payload)
           )
