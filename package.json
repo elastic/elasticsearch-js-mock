@@ -35,6 +35,7 @@
   "homepage": "https://github.com/elastic/elasticsearch-js-mock#readme",
   "devDependencies": {
     "@elastic/elasticsearch": "^7.14.0",
+    "@elastic/elasticsearch-canary": "^7.16.0-canary.2",
     "ava": "^3.15.0",
     "nyc": "^15.1.0",
     "standard": "^16.0.3",

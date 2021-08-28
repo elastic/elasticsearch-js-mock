@@ -123,28 +123,11 @@ function buildConnectionClass (mocker) {
         let statusCode = 200
 
         const resolver = mocker.get(params)
-        console.log(params, resolver)
 
         if (resolver === null) {
           // return info route for product check unless configured otherwise
           if (params.method === 'GET' && params.path === '/') {
-            payload = {
-              name: 'name',
-              cluster_name: 'cluster_name',
-              cluster_uuid: 'cluster_uuid',
-              version: {
-                number: '8.0.0-SNAPSHOT',
-                build_flavor: 'default',
-                build_type: 'docker',
-                build_hash: 'build_hash',
-                build_date: 'build_date',
-                build_snapshot: true,
-                lucene_version: '8.9.0',
-                minimum_wire_compatibility_version: '7.15.0',
-                minimum_index_compatibility_version: '7.0.0'
-              },
-              tagline: 'You Know, for Search'
-            }
+            payload = { version: { number: '8.0.0-SNAPSHOT' } }
           } else {
             payload = { error: 'Mock not found' }
             statusCode = 404
