@@ -5,8 +5,7 @@
 'use strict'
 
 const test = require('ava')
-const { Client } = require('@elastic/elasticsearch-canary')
-const { errors } = require('@elastic/elasticsearch')
+const { Client, errors } = require('@elastic/elasticsearch')
 const intoStream = require('into-stream')
 const Mock = require('./')
 
@@ -118,7 +117,7 @@ test('If an API has not been mocked, it should return a 404', async t => {
     await client.cat.indices()
     t.fail('Should throw')
   } catch (err) {
-    t.is(err.name, 'ResponseError')
+    t.true(err instanceof errors.ResponseError)
     t.deepEqual(err.body, { error: 'Mock not found' })
     t.is(err.statusCode, 404)
   }
@@ -269,7 +268,7 @@ test.cb('Abort a request (with callbacks)', t => {
   })
 
   const r = client.cat.indices((err, result) => {
-    t.is(err.name, 'RequestAbortedError')
+    t.true(err instanceof errors.RequestAbortedError)
     t.end()
   })
 
@@ -290,7 +289,7 @@ test('Abort a request (with promises)', async t => {
     await p
     t.fail('Should throw')
   } catch (err) {
-    t.is(err.name, 'RequestAbortedError')
+    t.true(err instanceof errors.RequestAbortedError)
   }
 })
 
@@ -338,7 +337,7 @@ test('Return a timeout error', async t => {
     await client.cat.indices()
     t.fail('Should throw')
   } catch (err) {
-    t.is(err.name, 'TimeoutError')
+    t.true(err instanceof errors.TimeoutError)
   }
 })
 
@@ -486,7 +485,7 @@ test('The handler for the route exists, but the request is not enough precise', 
     await client.cat.indices()
     t.fail('Should throw')
   } catch (err) {
-    t.is(err.name, 'ResponseError')
+    t.true(err instanceof errors.ResponseError)
     t.deepEqual(err.body, { error: 'Mock not found' })
     t.is(err.statusCode, 404)
   }
@@ -813,7 +812,7 @@ test('Should clear individual mocks', async t => {
     })
     t.fail('Should throw')
   } catch (err) {
-    t.is(err.name, 'ResponseError')
+    t.true(err instanceof errors.ResponseError)
     t.deepEqual(err.body, { error: 'Mock not found' })
     t.is(err.statusCode, 404)
   }
@@ -863,7 +862,7 @@ test('Should clear all mocks', async t => {
     })
     t.fail('Should throw')
   } catch (err) {
-    t.is(err.name, 'ResponseError')
+    t.true(err instanceof errors.ResponseError)
     t.deepEqual(err.body, { error: 'Mock not found' })
     t.is(err.statusCode, 404)
   }
@@ -874,7 +873,7 @@ test('Should clear all mocks', async t => {
     })
     t.fail('Should throw')
   } catch (err) {
-    t.is(err.name, 'ResponseError')
+    t.true(err instanceof errors.ResponseError)
     t.deepEqual(err.body, { error: 'Mock not found' })
     t.is(err.statusCode, 404)
   }
@@ -898,6 +897,6 @@ test('Override product check', async t => {
     await client.cat.nodes()
     t.fail('Should throw')
   } catch (err) {
-    t.is(err.name, 'ProductNotSupportedError')
+    t.true(err instanceof errors.ProductNotSupportedError)
   }
 })
