@@ -110,6 +110,7 @@ function buildConnectionClass (mocker) {
       normalizeParams(params, prepareResponse)
 
       function prepareResponse (error, params) {
+        /* istanbul ignore next */
         if (aborted) {
           return callback(new RequestAbortedError(), null)
         }
@@ -163,6 +164,7 @@ function buildConnectionClass (mocker) {
       }
 
       return {
+        /* istanbul ignore next */
         abort () {
           aborted = true
         }
