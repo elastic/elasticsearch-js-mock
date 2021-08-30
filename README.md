@@ -31,12 +31,12 @@ const client = new Client({
 
 mock.add({
   method: 'GET',
-  path: '/'
+  path: '/_cat/health'
 }, () => {
   return { status: 'ok' }
 })
 
-client.info(console.log)
+client.cat.health(console.log)
 ```
 
 ## API
@@ -54,11 +54,11 @@ const mock = new Mock()
 Adds a new mock for a given pattern and assigns it to a resolver function.
 
 ```js
-// every GET request to the `/` path
+// every GET request to the `/_cat/health` path
 // will return `{ status: 'ok' }`
 mock.add({
   method: 'GET',
-  path: '/'
+  path: '/_cat/health'
 }, () => {
   return { status: 'ok' }
 })
@@ -82,7 +82,7 @@ Returns the matching resolver function for the given pattern, it returns `null` 
 ```js
 const fn = mock.get({
   method: 'GET',
-  path: '/'
+  path: '/_cat/health'
 })
 ```
 
@@ -136,14 +136,14 @@ The more field you specify, the more the mock will be strict, for example:
 ```js
 mock.add({
   method: 'GET',
-  path: '/',
+  path: '/_cat/health'
   querystring: { pretty: 'true' }
 }, () => {
   return { status: 'ok' }
 })
 
-client.info(console.log) // => 404 error
-client.info({ pretty: true }, console.log) // => { status: 'ok' }
+client.cat.health(console.log) // => 404 error
+client.cat.health({ pretty: true }, console.log) // => { status: 'ok' }
 ```
 
 You can craft custom responses for different queries:
@@ -227,7 +227,7 @@ const Mock = require('@elastic/elasticsearch-mock')
 const mock = new Mock()
 mock.add({
   method: 'GET',
-  path: '/'
+  path: '/_cat/health'
 }, () => {
   return new errors.ResponseError({
     body: { errors: {}, status: 500 },

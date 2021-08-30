@@ -106,10 +106,11 @@ class Mocker {
 function buildConnectionClass (mocker) {
   class MockConnection extends Connection {
     request (params, callback) {
-      var aborted = false
+      let aborted = false
       normalizeParams(params, prepareResponse)
 
       function prepareResponse (error, params) {
+        /* istanbul ignore next */
         if (aborted) {
           return callback(new RequestAbortedError(), null)
         }
@@ -118,15 +119,21 @@ function buildConnectionClass (mocker) {
           return callback(new ConnectionError(error.message), null)
         }
 
-        var stream = null
-        var payload = ''
-        var statusCode = 200
+        let stream = null
+        let payload = ''
+        let statusCode = 200
 
         const resolver = mocker.get(params)
+
         if (resolver === null) {
-          payload = { error: 'Mock not found' }
+          // return info route for product check unless configured otherwise
+          if (params.method === 'GET' && params.path === '/') {
+            payload = { version: { number: '8.0.0-SNAPSHOT' } }
+          } else {
+            payload = { error: 'Mock not found' }
+            statusCode = 404
+          }
           stream = intoStream(JSON.stringify(payload))
-          statusCode = 404
         } else {
           payload = resolver(params)
           if (payload instanceof ResponseError) {
@@ -147,6 +154,7 @@ function buildConnectionClass (mocker) {
             : 'application/json;utf=8',
           date: new Date().toISOString(),
           connection: 'keep-alive',
+          'x-elastic-product': 'Elasticsearch',
           'content-length': Buffer.byteLength(
             typeof payload === 'string' ? payload : JSON.stringify(payload)
           )
@@ -156,6 +164,7 @@ function buildConnectionClass (mocker) {
       }
 
       return {
+        /* istanbul ignore next */
         abort () {
           aborted = true
         }

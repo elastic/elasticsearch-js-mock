@@ -18,12 +18,12 @@ test('Should mock an API', async t => {
 
   mock.add({
     method: 'GET',
-    path: '/'
+    path: '/_cat/indices'
   }, () => {
     return { status: 'ok' }
   })
 
-  const response = await client.info()
+  const response = await client.cat.indices()
   t.deepEqual(response.body, { status: 'ok' })
   t.is(response.statusCode, 200)
 })
@@ -114,7 +114,7 @@ test('If an API has not been mocked, it should return a 404', async t => {
   })
 
   try {
-    await client.info()
+    await client.cat.indices()
     t.fail('Should throw')
   } catch (err) {
     t.true(err instanceof errors.ResponseError)
@@ -267,7 +267,7 @@ test.cb('Abort a request (with callbacks)', t => {
     Connection: mock.getConnection()
   })
 
-  const r = client.info((err, result) => {
+  const r = client.cat.indices((err, result) => {
     t.true(err instanceof errors.RequestAbortedError)
     t.end()
   })
@@ -282,7 +282,7 @@ test('Abort a request (with promises)', async t => {
     Connection: mock.getConnection()
   })
 
-  const p = client.info()
+  const p = client.cat.indices()
   p.abort()
 
   try {
@@ -302,7 +302,7 @@ test('Return a response error', async t => {
 
   mock.add({
     method: 'GET',
-    path: '/'
+    path: '/_cat/indices'
   }, () => {
     return new errors.ResponseError({
       body: { errors: {}, status: 500 },
@@ -311,7 +311,7 @@ test('Return a response error', async t => {
   })
 
   try {
-    await client.info()
+    await client.cat.indices()
     t.fail('Should throw')
   } catch (err) {
     t.deepEqual(err.body, { errors: {}, status: 500 })
@@ -328,13 +328,13 @@ test('Return a timeout error', async t => {
 
   mock.add({
     method: 'GET',
-    path: '/'
+    path: '/_cat/indices'
   }, () => {
     return new errors.TimeoutError()
   })
 
   try {
-    await client.info()
+    await client.cat.indices()
     t.fail('Should throw')
   } catch (err) {
     t.true(err instanceof errors.TimeoutError)
@@ -440,20 +440,20 @@ test('Discriminate on the querystring', async t => {
 
   mock.add({
     method: 'GET',
-    path: '/'
+    path: '/_cat/indices'
   }, () => {
     return { querystring: false }
   })
 
   mock.add({
     method: 'GET',
-    path: '/',
+    path: '/_cat/indices',
     querystring: { pretty: 'true' }
   }, () => {
     return { querystring: true }
   })
 
-  const response = await client.info({ pretty: true })
+  const response = await client.cat.indices({ pretty: true })
   t.deepEqual(response.body, { querystring: true })
   t.is(response.statusCode, 200)
 })
@@ -467,7 +467,7 @@ test('The handler for the route exists, but the request is not enough precise', 
 
   mock.add({
     method: 'GET',
-    path: '/',
+    path: '/_cat/indices',
     querystring: { human: 'true' }
   }, () => {
     return { status: 'ok' }
@@ -475,14 +475,14 @@ test('The handler for the route exists, but the request is not enough precise', 
 
   mock.add({
     method: 'GET',
-    path: '/',
+    path: '/_cat/indices',
     querystring: { pretty: 'true' }
   }, () => {
     return { status: 'ok' }
   })
 
   try {
-    await client.info()
+    await client.cat.indices()
     t.fail('Should throw')
   } catch (err) {
     t.true(err instanceof errors.ResponseError)
@@ -500,12 +500,12 @@ test('Send back a plain string', async t => {
 
   mock.add({
     method: 'GET',
-    path: '/'
+    path: '/_cat/indices'
   }, () => {
     return 'ok'
   })
 
-  const response = await client.info()
+  const response = await client.cat.indices()
   t.is(response.body, 'ok')
   t.is(response.statusCode, 200)
   t.is(response.headers['content-type'], 'text/plain;utf=8')
@@ -876,5 +876,27 @@ test('Should clear all mocks', async t => {
     t.true(err instanceof errors.ResponseError)
     t.deepEqual(err.body, { error: 'Mock not found' })
     t.is(err.statusCode, 404)
+  }
+})
+
+test('Override product check', async t => {
+  const mock = new Mock()
+  const client = new Client({
+    node: 'http://localhost:9200',
+    Connection: mock.getConnection()
+  })
+
+  mock.add({
+    method: 'GET',
+    path: '/'
+  }, () => {
+    return { something: 'else' }
+  })
+
+  try {
+    await client.cat.nodes()
+    t.fail('Should throw')
+  } catch (err) {
+    t.true(err instanceof errors.ProductNotSupportedError)
   }
 })

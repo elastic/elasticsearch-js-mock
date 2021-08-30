@@ -15,7 +15,7 @@ const client = new Client({
 
 mock.add({
   method: 'GET',
-  path: '/'
+  path: '/_cat/health'
 }, () => {
   return { status: 'ok' }
 })
@@ -64,7 +64,7 @@ mock.add({
   }
 })
 
-client.info(console.log)
+client.cat.health(console.log)
 
 client.ping(console.log)
 
