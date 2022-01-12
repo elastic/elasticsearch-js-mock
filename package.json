@@ -1,6 +1,6 @@
 {
   "name": "@elastic/elasticsearch-mock",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Mock utility for the Elasticsearch's Node.js client",
   "main": "index.js",
   "types": "index.d.ts",
@@ -34,7 +34,7 @@
   },
   "homepage": "https://github.com/elastic/elasticsearch-js-mock#readme",
   "devDependencies": {
-    "@elastic/elasticsearch": "^7.14.0",
+    "@elastic/elasticsearch": "^8.0.0-beta.1",
     "ava": "^3.15.0",
     "nyc": "^15.1.0",
     "standard": "^16.0.3",

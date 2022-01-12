@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { Connection } from '@elastic/elasticsearch'
+import { BaseConnection } from '@elastic/elasticsearch'
 
 declare class ClientMock {
   constructor()
@@ -25,7 +25,7 @@ declare class ClientMock {
   get(pattern: MockPattern): ResolverFn | null
   clear(pattern: Pick<MockPattern, 'method' | 'path'>): ClientMock
   clearAll(): ClientMock
-  getConnection(): typeof Connection
+  getConnection(): typeof BaseConnection
 }
 
 export declare type ResolverFn = (params: MockPattern) => Record<string, any> | string
