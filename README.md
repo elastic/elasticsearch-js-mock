@@ -4,7 +4,11 @@
 
 [![js-standard-style](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat)](http://standardjs.com/)  ![build](https://github.com/elastic/elasticsearch-js-mock/workflows/build/badge.svg)
 
-When testing your application you don't always need to have an Elasticsearch instance up and running, but you might still need to use the client for fetching some data. If you are facing this situation, this library is what you need.
+When testing your application you don't always need to have an Elasticsearch instance up and running,
+but you might still need to use the client for fetching some data.
+If you are facing this situation, this library is what you need.
+
+This library is compatibile with `@elastic/elasticsearch` ≤ v7.
 
 ### Features
 
