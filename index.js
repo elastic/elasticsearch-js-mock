@@ -120,18 +120,24 @@ class Mocker {
 function buildConnectionClass (mocker) {
   class MockConnection extends BaseConnection {
     request (params, options) {
+      const abortListener = () => {
+        aborted = true
+      }
       let aborted = false
       if (options.signal != null) {
-        options.signal.addEventListener(
-          'abort',
-          () => { aborted = true },
-          { once: true }
-        )
+        options.signal.addEventListener('abort', abortListener, { once: true })
       }
 
       return new Promise((resolve, reject) => {
         normalizeParams(params, prepareResponse)
         function prepareResponse (error, params) {
+          if (options.signal != null) {
+            if ('removeEventListener' in options.signal) {
+              options.signal.removeEventListener('abort', abortListener)
+            } else {
+              options.signal.removeListener('abort', abortListener)
+            }
+          }
           /* istanbul ignore next */
           if (aborted) {
             return reject(new RequestAbortedError())
