@@ -21,6 +21,7 @@
 
 const test = require('ava')
 const { Client, errors } = require('@elastic/elasticsearch')
+const { AbortController } = require('node-abort-controller')
 const intoStream = require('into-stream')
 const Mock = require('./')
 
@@ -38,7 +39,7 @@ test('Should mock an API', async t => {
     return { status: 'ok' }
   })
 
-  const response = await client.cat.indices()
+  const response = await client.cat.indices({}, { meta: true })
   t.deepEqual(response.body, { status: 'ok' })
   t.is(response.statusCode, 200)
 })
@@ -77,10 +78,10 @@ test('Mock granularity', async t => {
 
   let response = await client.search({
     index: 'test',
-    body: { query: { match_all: {} } }
+    query: { match_all: {} }
   })
 
-  t.deepEqual(response.body, {
+  t.deepEqual(response, {
     hits: {
       total: { value: 1, relation: 'eq' },
       hits: [{ _source: { baz: 'faz' } }]
@@ -89,10 +90,10 @@ test('Mock granularity', async t => {
 
   response = await client.search({
     index: 'test',
-    body: { query: { match: { foo: 'bar' } } }
+    query: { match: { foo: 'bar' } }
   })
 
-  t.deepEqual(response.body, {
+  t.deepEqual(response, {
     hits: {
       total: { value: 0, relation: 'eq' },
       hits: []
@@ -115,10 +116,10 @@ test('Dynamic paths', async t => {
   })
 
   let response = await client.count({ index: 'foo' })
-  t.deepEqual(response.body, { count: 42 })
+  t.deepEqual(response, { count: 42 })
 
   response = await client.count({ index: 'bar' })
-  t.deepEqual(response.body, { count: 42 })
+  t.deepEqual(response, { count: 42 })
 })
 
 test('If an API has not been mocked, it should return a 404', async t => {
@@ -173,10 +174,10 @@ test('Should handle compressed request', async t => {
 
   const response = await client.search({
     index: 'test',
-    body: { query: { match_all: {} } }
+    query: { match_all: {} }
   })
 
-  t.deepEqual(response.body, {
+  t.deepEqual(response, {
     hits: {
       total: { value: 1, relation: 'eq' },
       hits: [{ _source: { baz: 'faz' } }]
@@ -184,7 +185,7 @@ test('Should handle compressed request', async t => {
   })
 })
 
-test('Should handle streaming body', async t => {
+test('Should handle streaming body with transport.request', async t => {
   const mock = new Mock()
   const client = new Client({
     node: 'http://localhost:9200',
@@ -216,12 +217,13 @@ test('Should handle streaming body', async t => {
     }
   })
 
-  const response = await client.search({
-    index: 'test',
+  const response = await client.transport.request({
+    method: 'POST',
+    path: '/test/_search',
     body: intoStream(JSON.stringify({ query: { match: { foo: 'bar' } } }))
   })
 
-  t.deepEqual(response.body, {
+  t.deepEqual(response, {
     hits: {
       total: { value: 0, relation: 'eq' },
       hits: []
@@ -229,7 +231,7 @@ test('Should handle streaming body', async t => {
   })
 })
 
-test('Should handle compressed streaming body', async t => {
+test('Should handle compressed streaming body with transport.request', async t => {
   const mock = new Mock()
   const client = new Client({
     node: 'http://localhost:9200',
@@ -262,12 +264,13 @@ test('Should handle compressed streaming body', async t => {
     }
   })
 
-  const response = await client.search({
-    index: 'test',
+  const response = await client.transport.request({
+    method: 'POST',
+    path: '/test/_search',
     body: intoStream(JSON.stringify({ query: { match: { foo: 'bar' } } }))
   })
 
-  t.deepEqual(response.body, {
+  t.deepEqual(response, {
     hits: {
       total: { value: 0, relation: 'eq' },
       hits: []
@@ -275,30 +278,16 @@ test('Should handle compressed streaming body', async t => {
   })
 })
 
-test.cb('Abort a request (with callbacks)', t => {
+test('Abort a request', async t => {
   const mock = new Mock()
   const client = new Client({
     node: 'http://localhost:9200',
     Connection: mock.getConnection()
   })
 
-  const r = client.cat.indices((err, result) => {
-    t.true(err instanceof errors.RequestAbortedError)
-    t.end()
-  })
-
-  r.abort()
-})
-
-test('Abort a request (with promises)', async t => {
-  const mock = new Mock()
-  const client = new Client({
-    node: 'http://localhost:9200',
-    Connection: mock.getConnection()
-  })
-
-  const p = client.cat.indices()
-  p.abort()
+  const ac = new AbortController()
+  const p = client.cat.indices({}, { signal: ac.signal })
+  ac.abort()
 
   try {
     await p
@@ -371,10 +360,10 @@ test('The mock function should receive the request parameters', async t => {
 
   const response = await client.search({
     index: 'test',
-    body: { query: { match_all: {} } }
+    query: { match_all: {} }
   })
 
-  t.deepEqual(response.body, {
+  t.deepEqual(response, {
     method: 'POST',
     path: '/test/_search',
     querystring: {},
@@ -422,10 +411,10 @@ test('Should handle the same mock with different body/querystring', async t => {
   let response = await client.search({
     index: 'test',
     pretty: true,
-    body: { query: { match_all: {} } }
+    query: { match_all: {} }
   })
 
-  t.deepEqual(response.body, {
+  t.deepEqual(response, {
     hits: {
       total: { value: 1, relation: 'eq' },
       hits: [{ _source: { baz: 'faz' } }]
@@ -435,10 +424,10 @@ test('Should handle the same mock with different body/querystring', async t => {
   response = await client.search({
     index: 'test',
     pretty: true,
-    body: { query: { match: { foo: 'bar' } } }
+    query: { match: { foo: 'bar' } }
   })
 
-  t.deepEqual(response.body, {
+  t.deepEqual(response, {
     hits: {
       total: { value: 0, relation: 'eq' },
       hits: []
@@ -468,7 +457,7 @@ test('Discriminate on the querystring', async t => {
     return { querystring: true }
   })
 
-  const response = await client.cat.indices({ pretty: true })
+  const response = await client.cat.indices({ pretty: true }, { meta: true })
   t.deepEqual(response.body, { querystring: true })
   t.is(response.statusCode, 200)
 })
@@ -520,7 +509,7 @@ test('Send back a plain string', async t => {
     return 'ok'
   })
 
-  const response = await client.cat.indices()
+  const response = await client.cat.indices({}, { meta: true })
   t.is(response.body, 'ok')
   t.is(response.statusCode, 200)
   t.is(response.headers['content-type'], 'text/plain;utf=8')
@@ -540,7 +529,7 @@ test('Should ignore trailing slashes', async t => {
     return { status: 'ok' }
   })
 
-  const response = await client.cat.indices()
+  const response = await client.cat.indices({}, { meta: true })
   t.deepEqual(response.body, { status: 'ok' })
   t.is(response.statusCode, 200)
 })
@@ -590,16 +579,14 @@ test('Define multiple methods at once', async t => {
   let response = await client.search({
     index: 'test',
     q: 'foo:bar'
-  })
+  }, { meta: true })
   t.deepEqual(response.body, { status: 'ok' })
   t.is(response.statusCode, 200)
 
   response = await client.search({
     index: 'test',
-    body: {
-      query: { match: { foo: 'bar' } }
-    }
-  })
+    query: { match: { foo: 'bar' } }
+  }, { meta: true })
   t.deepEqual(response.body, { status: 'ok' })
   t.is(response.statusCode, 200)
 })
@@ -621,14 +608,14 @@ test('Define multiple paths at once', async t => {
   let response = await client.search({
     index: 'test1',
     q: 'foo:bar'
-  })
+  }, { meta: true })
   t.deepEqual(response.body, { status: 'ok' })
   t.is(response.statusCode, 200)
 
   response = await client.search({
     index: 'test2',
     q: 'foo:bar'
-  })
+  }, { meta: true })
   t.deepEqual(response.body, { status: 'ok' })
   t.is(response.statusCode, 200)
 })
@@ -650,32 +637,28 @@ test('Define multiple paths and method at once', async t => {
   let response = await client.search({
     index: 'test1',
     q: 'foo:bar'
-  })
+  }, { meta: true })
   t.deepEqual(response.body, { status: 'ok' })
   t.is(response.statusCode, 200)
 
   response = await client.search({
     index: 'test2',
     q: 'foo:bar'
-  })
+  }, { meta: true })
   t.deepEqual(response.body, { status: 'ok' })
   t.is(response.statusCode, 200)
 
   response = await client.search({
     index: 'test1',
-    body: {
-      query: { match: { foo: 'bar' } }
-    }
-  })
+    query: { match: { foo: 'bar' } }
+  }, { meta: true })
   t.deepEqual(response.body, { status: 'ok' })
   t.is(response.statusCode, 200)
 
   response = await client.search({
     index: 'test2',
-    body: {
-      query: { match: { foo: 'bar' } }
-    }
-  })
+    query: { match: { foo: 'bar' } }
+  }, { meta: true })
   t.deepEqual(response.body, { status: 'ok' })
   t.is(response.statusCode, 200)
 })
@@ -699,11 +682,11 @@ test('ndjson API support', async t => {
   })
 
   const response = await client.bulk({
-    body: [
+    operations: [
       { foo: 'bar' },
       { baz: 'fa\nz' }
     ]
-  })
+  }, { meta: true })
   t.deepEqual(response.body, { status: 'ok' })
   t.is(response.statusCode, 200)
 })
@@ -728,16 +711,16 @@ test('ndjson API support (with compression)', async t => {
   })
 
   const response = await client.bulk({
-    body: [
+    operations: [
       { foo: 'bar' },
       { baz: 'fa\nz' }
     ]
-  })
+  }, { meta: true })
   t.deepEqual(response.body, { status: 'ok' })
   t.is(response.statusCode, 200)
 })
 
-test('ndjson API support (as stream)', async t => {
+test('ndjson API support (as stream) with transport.request', async t => {
   const mock = new Mock()
   const client = new Client({
     node: 'http://localhost:9200',
@@ -755,17 +738,19 @@ test('ndjson API support (as stream)', async t => {
     return { status: 'ok' }
   })
 
-  const response = await client.bulk({
-    body: intoStream(client.serializer.ndserialize([
+  const response = await client.transport.request({
+    method: 'POST',
+    path: '/_bulk',
+    bulkBody: intoStream(client.serializer.ndserialize([
       { foo: 'bar' },
       { baz: 'fa\nz' }
     ]))
-  })
+  }, { meta: true })
   t.deepEqual(response.body, { status: 'ok' })
   t.is(response.statusCode, 200)
 })
 
-test('ndjson API support (as stream with compression)', async t => {
+test('ndjson API support (as stream with compression) with transport.request', async t => {
   const mock = new Mock()
   const client = new Client({
     node: 'http://localhost:9200',
@@ -784,12 +769,14 @@ test('ndjson API support (as stream with compression)', async t => {
     return { status: 'ok' }
   })
 
-  const response = await client.bulk({
-    body: intoStream(client.serializer.ndserialize([
+  const response = await client.transport.request({
+    method: 'POST',
+    path: '/_bulk',
+    bulkBody: intoStream(client.serializer.ndserialize([
       { foo: 'bar' },
       { baz: 'fa\nz' }
     ]))
-  })
+  }, { meta: true })
   t.deepEqual(response.body, { status: 'ok' })
   t.is(response.statusCode, 200)
 })
@@ -815,7 +802,7 @@ test('Should clear individual mocks', async t => {
   const response = await client.search({
     index: 'test2',
     q: 'foo:bar'
-  })
+  }, { meta: true })
   t.deepEqual(response.body, { status: 'ok' })
   t.is(response.statusCode, 200)
 
@@ -891,27 +878,5 @@ test('Should clear all mocks', async t => {
     t.true(err instanceof errors.ResponseError)
     t.deepEqual(err.body, { error: 'Mock not found' })
     t.is(err.statusCode, 404)
-  }
-})
-
-test('Override product check', async t => {
-  const mock = new Mock()
-  const client = new Client({
-    node: 'http://localhost:9200',
-    Connection: mock.getConnection()
-  })
-
-  mock.add({
-    method: 'GET',
-    path: '/'
-  }, () => {
-    return { something: 'else' }
-  })
-
-  try {
-    await client.cat.nodes()
-    t.fail('Should throw')
-  } catch (err) {
-    t.true(err instanceof errors.ProductNotSupportedError)
   }
 })
