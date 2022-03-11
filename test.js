@@ -143,7 +143,7 @@ test('Should handle compressed request', async t => {
   const mock = new Mock()
   const client = new Client({
     node: 'http://localhost:9200',
-    compression: 'gzip',
+    compression: true,
     Connection: mock.getConnection()
   })
 
@@ -235,7 +235,7 @@ test('Should handle compressed streaming body with transport.request', async t =
   const mock = new Mock()
   const client = new Client({
     node: 'http://localhost:9200',
-    compression: 'gzip',
+    compression: true,
     Connection: mock.getConnection()
   })
 
@@ -349,7 +349,7 @@ test('The mock function should receive the request parameters', async t => {
   const mock = new Mock()
   const client = new Client({
     node: 'http://localhost:9200',
-    compression: 'gzip',
+    compression: true,
     Connection: mock.getConnection()
   })
 
@@ -696,7 +696,7 @@ test('ndjson API support (with compression)', async t => {
   const client = new Client({
     node: 'http://localhost:9200',
     Connection: mock.getConnection(),
-    compression: 'gzip'
+    compression: true
   })
 
   mock.add({
@@ -755,7 +755,7 @@ test('ndjson API support (as stream with compression) with transport.request', a
   const client = new Client({
     node: 'http://localhost:9200',
     Connection: mock.getConnection(),
-    compression: 'gzip'
+    compression: true
   })
 
   mock.add({

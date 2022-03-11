@@ -131,6 +131,7 @@ function buildConnectionClass (mocker) {
       return new Promise((resolve, reject) => {
         normalizeParams(params, prepareResponse)
         function prepareResponse (error, params) {
+          /* istanbul ignore next */
           if (options.signal != null) {
             if ('removeEventListener' in options.signal) {
               options.signal.removeEventListener('abort', abortListener)
