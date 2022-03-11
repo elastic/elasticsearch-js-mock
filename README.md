@@ -8,7 +8,7 @@ When testing your application you don't always need to have an Elasticsearch ins
 but you might still need to use the client for fetching some data.
 If you are facing this situation, this library is what you need.
 
-This library is compatible with `@elastic/elasticsearch` ≤ v7.
+Use `v1.0.0` for `@elastic/elasticsearch` ≤ v7 compatibility and `v2.0.0` for  `@elastic/elasticsearch` ≥ v8 compatibility.
 
 ### Features
 
@@ -40,7 +40,9 @@ mock.add({
   return { status: 'ok' }
 })
 
-client.cat.health(console.log)
+client.cat.health()
+  .then(console.log)
+  .catch(console.log)
 ```
 
 ## API
@@ -146,8 +148,13 @@ mock.add({
   return { status: 'ok' }
 })
 
-client.cat.health(console.log) // => 404 error
-client.cat.health({ pretty: true }, console.log) // => { status: 'ok' }
+client.cat.health()
+  .then(console.log)
+  .catch(console.log) // 404 error
+
+client.cat.health({ pretty: true })
+  .then(console.log) // { status: 'ok' }
+  .catch(console.log)
 ```
 
 You can craft custom responses for different queries:
@@ -189,8 +196,13 @@ mock.add({
   return { count: 42 }
 })
 
-client.count({ index: 'foo' }, console.log) // => { count: 42 }
-client.count({ index: 'bar' }, console.log) // => { count: 42 }
+client.count({ index: 'foo' })
+  .then(console.log) // => { count: 42 }
+  .catch(console.log)
+
+client.count({ index: 'bar' })
+  .then(console.log) // => { count: 42 }
+  .catch(console.log)
 ```
 
 Wildcards are supported as well.
@@ -199,11 +211,16 @@ mock.add({
   method: 'HEAD',
   path: '*'
 }, () => {
-  return { status: 'ok' }
+  return ''
 })
 
-client.indices.exists({ index: 'foo' }, console.log) // => { status: 'ok' }
-client.ping(console.log) // => { status: 'ok' }
+client.indices.exists({ index: 'foo' })
+  .then(console.log) // => true
+  .catch(console.log)
+
+client.ping()
+  .then(console.log) // => true
+  .catch(console.log)
 ```
 
 ### Dynamic responses

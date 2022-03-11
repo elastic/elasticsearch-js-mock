@@ -21,9 +21,8 @@
 
 const { gunzip, createGunzip } = require('zlib')
 const querystring = require('querystring')
-const { Connection, errors } = require('@elastic/elasticsearch')
+const { BaseConnection, errors } = require('@elastic/elasticsearch')
 const Router = require('find-my-way')
-const intoStream = require('into-stream')
 const equal = require('fast-deep-equal')
 const kRouter = Symbol('elasticsearch-mock-router')
 
@@ -119,71 +118,72 @@ class Mocker {
 }
 
 function buildConnectionClass (mocker) {
-  class MockConnection extends Connection {
-    request (params, callback) {
+  class MockConnection extends BaseConnection {
+    request (params, options) {
+      const abortListener = () => {
+        aborted = true
+      }
       let aborted = false
-      normalizeParams(params, prepareResponse)
+      if (options.signal != null) {
+        options.signal.addEventListener('abort', abortListener, { once: true })
+      }
 
-      function prepareResponse (error, params) {
-        /* istanbul ignore next */
-        if (aborted) {
-          return callback(new RequestAbortedError(), null)
-        }
-        /* istanbul ignore next */
-        if (error) {
-          return callback(new ConnectionError(error.message), null)
-        }
+      return new Promise((resolve, reject) => {
+        normalizeParams(params, prepareResponse)
+        function prepareResponse (error, params) {
+          /* istanbul ignore next */
+          if (options.signal != null) {
+            if ('removeEventListener' in options.signal) {
+              options.signal.removeEventListener('abort', abortListener)
+            } else {
+              options.signal.removeListener('abort', abortListener)
+            }
+          }
+          /* istanbul ignore next */
+          if (aborted) {
+            return reject(new RequestAbortedError())
+          }
+          /* istanbul ignore next */
+          if (error) {
+            return reject(new ConnectionError(error.message))
+          }
 
-        let stream = null
-        let payload = ''
-        let statusCode = 200
+          const response = {}
+          let payload = ''
+          let statusCode = 200
 
-        const resolver = mocker.get(params)
+          const resolver = mocker.get(params)
 
-        if (resolver === null) {
-          // return info route for product check unless configured otherwise
-          if (params.method === 'GET' && params.path === '/') {
-            payload = { version: { number: '8.0.0-SNAPSHOT' } }
-          } else {
+          if (resolver === null) {
             payload = { error: 'Mock not found' }
             statusCode = 404
+          } else {
+            payload = resolver(params)
+            if (payload instanceof ResponseError) {
+              statusCode = payload.statusCode
+              payload = payload.body
+            } else if (payload instanceof ElasticsearchClientError) {
+              return reject(payload)
+            }
           }
-          stream = intoStream(JSON.stringify(payload))
-        } else {
-          payload = resolver(params)
-          if (payload instanceof ResponseError) {
-            statusCode = payload.statusCode
-            payload = payload.body
-          } else if (payload instanceof ElasticsearchClientError) {
-            return callback(payload, null)
+
+          response.body = typeof payload === 'string' ? payload : JSON.stringify(payload)
+          response.statusCode = statusCode
+          response.headers = {
+            'content-type': typeof payload === 'string'
+              ? 'text/plain;utf=8'
+              : 'application/json;utf=8',
+            date: new Date().toISOString(),
+            connection: 'keep-alive',
+            'x-elastic-product': 'Elasticsearch',
+            'content-length': Buffer.byteLength(
+              typeof payload === 'string' ? payload : JSON.stringify(payload)
+            )
           }
-          stream = intoStream(
-            typeof payload === 'string' ? payload : JSON.stringify(payload)
-          )
-        }
 
-        stream.statusCode = statusCode
-        stream.headers = {
-          'content-type': typeof payload === 'string'
-            ? 'text/plain;utf=8'
-            : 'application/json;utf=8',
-          date: new Date().toISOString(),
-          connection: 'keep-alive',
-          'x-elastic-product': 'Elasticsearch',
-          'content-length': Buffer.byteLength(
-            typeof payload === 'string' ? payload : JSON.stringify(payload)
-          )
+          resolve(response)
         }
-
-        callback(null, stream)
-      }
-
-      return {
-        /* istanbul ignore next */
-        abort () {
-          aborted = true
-        }
-      }
+      })
     }
   }
 
