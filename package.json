@@ -1,6 +1,6 @@
 {
   "name": "@elastic/elasticsearch-mock",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Mock utility for the Elasticsearch's Node.js client",
   "main": "index.js",
   "types": "index.d.ts",
