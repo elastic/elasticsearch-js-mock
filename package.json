@@ -39,7 +39,7 @@
     "node-abort-controller": "3.1.1",
     "nyc": "15.1.0",
     "standard": "16.0.4",
-    "tsd": "0.19.1"
+    "tsd": "0.31.2"
   },
   "dependencies": {
     "fast-deep-equal": "^3.1.3",
