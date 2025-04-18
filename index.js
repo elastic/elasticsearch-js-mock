@@ -55,6 +55,11 @@ class Mocker {
     if (typeof pattern.path !== 'string') throw new ConfigurationError('The path is not defined')
     if (typeof fn !== 'function') throw new ConfigurationError('The resolver function is not defined')
 
+    // workaround since find-my-way no longer decodes URI escaped chars
+    // https://github.com/delvedor/find-my-way/pull/282
+    // https://github.com/delvedor/find-my-way/pull/286
+    if (pattern.path.indexOf('%') > -1) pattern.path = decodeURIComponent(pattern.path)
+
     const handler = this[kRouter].find(pattern.method, pattern.path)
     if (handler) {
       handler.store.push({ ...pattern, fn })
@@ -64,10 +69,19 @@ class Mocker {
     } else {
       this[kRouter].on(pattern.method, pattern.path, noop, [{ ...pattern, fn }])
     }
+
     return this
   }
 
   get (params) {
+    if (typeof params.method !== 'string') throw new ConfigurationError('The method is not defined')
+    if (typeof params.path !== 'string') throw new ConfigurationError('The path is not defined')
+
+    // workaround since find-my-way no longer decodes URI escaped chars
+    // https://github.com/delvedor/find-my-way/pull/282
+    // https://github.com/delvedor/find-my-way/pull/286
+    if (params.path.indexOf('%') > -1) params.path = decodeURIComponent(params.path)
+
     const handler = this[kRouter].find(params.method, params.path)
     if (!handler) return null
     for (const { body, querystring, fn } of handler.store) {
