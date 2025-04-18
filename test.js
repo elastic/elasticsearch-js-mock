@@ -134,7 +134,7 @@ test('If an API has not been mocked, it should return a 404', async t => {
     t.fail('Should throw')
   } catch (err) {
     t.true(err instanceof errors.ResponseError)
-    t.deepEqual(err.body, { error: 'Mock not found' })
+    t.is(err.body.error, 'Mock not found')
     t.is(err.statusCode, 404)
   }
 })
@@ -490,7 +490,7 @@ test('The handler for the route exists, but the request is not enough precise', 
     t.fail('Should throw')
   } catch (err) {
     t.true(err instanceof errors.ResponseError)
-    t.deepEqual(err.body, { error: 'Mock not found' })
+    t.is(err.body.error, 'Mock not found')
     t.is(err.statusCode, 404)
   }
 })
@@ -815,7 +815,7 @@ test('Should clear individual mocks', async t => {
     t.fail('Should throw')
   } catch (err) {
     t.true(err instanceof errors.ResponseError)
-    t.deepEqual(err.body, { error: 'Mock not found' })
+    t.is(err.body.error, 'Mock not found')
     t.is(err.statusCode, 404)
   }
 })
@@ -865,7 +865,7 @@ test('Should clear all mocks', async t => {
     t.fail('Should throw')
   } catch (err) {
     t.true(err instanceof errors.ResponseError)
-    t.deepEqual(err.body, { error: 'Mock not found' })
+    t.is(err.body.error, 'Mock not found')
     t.is(err.statusCode, 404)
   }
   try {
@@ -876,7 +876,7 @@ test('Should clear all mocks', async t => {
     t.fail('Should throw')
   } catch (err) {
     t.true(err instanceof errors.ResponseError)
-    t.deepEqual(err.body, { error: 'Mock not found' })
+    t.is(err.body.error, 'Mock not found')
     t.is(err.statusCode, 404)
   }
 })
@@ -967,5 +967,29 @@ test('Validate types on get()', t => {
   } catch (err) {
     t.true(err instanceof errors.ConfigurationError)
     t.is(err.message, 'The method is not defined')
+  }
+})
+
+test('should show passed params when no mock is found', async t => {
+  const mock = new Mock()
+  mock.add({ method: 'DELETE', path: '/bar' }, () => {})
+  const client = new Client({
+    node: 'http://localhost:9200',
+    Connection: mock.getConnection()
+  })
+
+  try {
+    await client.info()
+    t.fail('should throw')
+  } catch (err) {
+    t.deepEqual(err.body, {
+      error: 'Mock not found',
+      params: {
+        body: null,
+        method: 'GET',
+        path: '/',
+        querystring: {}
+      }
+    })
   }
 })
