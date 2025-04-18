@@ -880,3 +880,92 @@ test('Should clear all mocks', async t => {
     t.is(err.statusCode, 404)
   }
 })
+
+test('Path should match URL-encoded characters for e.g. comma in multi-index operations', async t => {
+  t.plan(1)
+
+  const mock = new Mock()
+  const client = new Client({
+    node: 'http://localhost:9200',
+    Connection: mock.getConnection()
+  })
+
+  const spy = (_req, _res, _params, _store, _searchParams) => {
+    t.pass('Callback function was called')
+    return {}
+  }
+
+  mock.add(
+    {
+      method: 'DELETE',
+      path: '/some-type-index-123tobedeleted%2Csome-type-index-456tobedeleted'
+    },
+    spy
+  )
+
+  await client.indices.delete({
+    index: [
+      'some-type-index-123tobedeleted',
+      'some-type-index-456tobedeleted'
+    ]
+  })
+})
+
+test('Path should match unencoded comma in path', async t => {
+  t.plan(1)
+
+  const mock = new Mock()
+  const client = new Client({
+    node: 'http://localhost:9200',
+    Connection: mock.getConnection()
+  })
+
+  const spy = (_req, _res, _params, _store, _searchParams) => {
+    t.pass('Callback function was called')
+    return {}
+  }
+
+  mock.add(
+    {
+      method: 'DELETE',
+      path: '/some-type-index-123tobedeleted,some-type-index-456tobedeleted'
+    },
+    spy
+  )
+
+  await client.indices.delete({
+    index: [
+      'some-type-index-123tobedeleted',
+      'some-type-index-456tobedeleted'
+    ]
+  })
+})
+
+test('Validate types on get()', t => {
+  t.plan(4)
+
+  const mock = new Mock()
+  mock.add(
+    {
+      method: 'GET',
+      path: '/foo'
+    },
+    () => {}
+  )
+
+  try {
+    mock.get({ method: 'GET', path: null })
+    t.fail('should throw')
+  } catch (err) {
+    t.true(err instanceof errors.ConfigurationError)
+    t.is(err.message, 'The path is not defined')
+  }
+
+  try {
+    mock.get({ method: null, path: '/foo' })
+    t.fail('should throw')
+  } catch (err) {
+    t.true(err instanceof errors.ConfigurationError)
+    t.is(err.message, 'The method is not defined')
+  }
+})
