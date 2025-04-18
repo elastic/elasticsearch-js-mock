@@ -169,7 +169,7 @@ function buildConnectionClass (mocker) {
           const resolver = mocker.get(params)
 
           if (resolver === null) {
-            payload = { error: 'Mock not found' }
+            payload = { error: 'Mock not found', params }
             statusCode = 404
           } else {
             payload = resolver(params)
