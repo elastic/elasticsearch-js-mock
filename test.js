@@ -940,3 +940,32 @@ test('Path should match unencoded comma in path', async t => {
     ]
   })
 })
+
+test('Validate types on get()', t => {
+  t.plan(4)
+
+  const mock = new Mock()
+  mock.add(
+    {
+      method: 'GET',
+      path: '/foo'
+    },
+    () => {}
+  )
+
+  try {
+    mock.get({ method: 'GET', path: null })
+    t.fail('should throw')
+  } catch (err) {
+    t.true(err instanceof errors.ConfigurationError)
+    t.is(err.message, 'The path is not defined')
+  }
+
+  try {
+    mock.get({ method: null, path: '/foo' })
+    t.fail('should throw')
+  } catch (err) {
+    t.true(err instanceof errors.ConfigurationError)
+    t.is(err.message, 'The method is not defined')
+  }
+})
