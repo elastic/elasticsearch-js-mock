@@ -239,11 +239,11 @@ mock.add({
 
 ### Errors
 
-This utility uses the same error classes of the Elasticsearch client, if you want to return an error for a specific API call, you should use the `ResponseError` class:
+This utility uses the same error classes of the Elasticsearch client. If you want to return an error for a specific API call, use the `ResponseError` class exposed by this package:
 
 ```js
-const { errors } = require('@elastic/elasticsearch')
 const Mock = require('@elastic/elasticsearch-mock')
+const { errors } = Mock
 
 const mock = new Mock()
 mock.add({
@@ -255,6 +255,12 @@ mock.add({
     statusCode: 500
   })
 })
+```
+
+In ESM test suites, import the same `errors` export from the mock package:
+
+```js
+import Mock, { errors } from '@elastic/elasticsearch-mock'
 ```
 
 ## License

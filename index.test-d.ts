@@ -19,13 +19,15 @@
 
 import { expectType, expectError } from 'tsd'
 import { Client } from '@elastic/elasticsearch'
-import Mock, { MockPattern } from './'
+import Mock, { MockPattern, errors } from './'
 
 const mock = new Mock()
 const client = new Client({
   node: 'http://localhost:9200',
   Connection: mock.getConnection()
 })
+
+expectType<typeof errors>(Mock.errors)
 
 mock.add({
   method: 'GET',
@@ -77,6 +79,13 @@ mock.add({
 }, params => {
   expectType<MockPattern>(params)
   return 'ok'
+})
+
+mock.add({
+  method: 'GET',
+  path: '/'
+}, () => {
+  return new errors.ResponseError({ body: { error: { reason: 'not found' }, status: 404 }, statusCode: 404 } as any)
 })
 
 // querystring should only have string values

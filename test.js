@@ -323,6 +323,41 @@ test('Return a response error', async t => {
   }
 })
 
+test('Should expose the internally resolved error classes', async t => {
+  const imported = await import('./index.js')
+
+  t.is(Mock.errors.ResponseError, errors.ResponseError)
+  t.is(imported.errors.ResponseError, errors.ResponseError)
+})
+
+test('Return a response error from ESM Elasticsearch errors', async t => {
+  const { Client: EsmClient, errors: esmErrors } = await import('@elastic/elasticsearch')
+  const mock = new Mock()
+  const client = new EsmClient({
+    node: 'http://localhost:9200',
+    Connection: mock.getConnection()
+  })
+
+  mock.add({
+    method: 'GET',
+    path: '/_cat/indices'
+  }, () => {
+    return new esmErrors.ResponseError({
+      body: { errors: {}, status: 404 },
+      statusCode: 404
+    })
+  })
+
+  try {
+    await client.cat.indices()
+    t.fail('Should throw')
+  } catch (err) {
+    t.true(err instanceof esmErrors.ResponseError)
+    t.deepEqual(err.body, { errors: {}, status: 404 })
+    t.is(err.statusCode, 404)
+  }
+})
+
 test('Return a timeout error', async t => {
   const mock = new Mock()
   const client = new Client({
@@ -342,6 +377,29 @@ test('Return a timeout error', async t => {
     t.fail('Should throw')
   } catch (err) {
     t.true(err instanceof errors.TimeoutError)
+  }
+})
+
+test('Return a client error from ESM Elasticsearch errors', async t => {
+  const { Client: EsmClient, errors: esmErrors } = await import('@elastic/elasticsearch')
+  const mock = new Mock()
+  const client = new EsmClient({
+    node: 'http://localhost:9200',
+    Connection: mock.getConnection()
+  })
+
+  mock.add({
+    method: 'GET',
+    path: '/_cat/indices'
+  }, () => {
+    return new esmErrors.TimeoutError()
+  })
+
+  try {
+    await client.cat.indices()
+    t.fail('Should throw')
+  } catch (err) {
+    t.true(err instanceof esmErrors.TimeoutError)
   }
 })
 
