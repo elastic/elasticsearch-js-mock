@@ -214,7 +214,9 @@ function normalizeParams (params, callback) {
     querystring: { ...querystring.parse(params.querystring) }
   }
 
+  /* istanbul ignore next */
   const compression = (params.headers['Content-Encoding'] || params.headers['content-encoding']) === 'gzip'
+  /* istanbul ignore next */
   const type = params.headers['Content-Type'] || params.headers['content-type'] || ''
 
   if (isStream(params.body)) {

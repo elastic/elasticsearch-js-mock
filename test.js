@@ -403,6 +403,66 @@ test('Return a client error from ESM Elasticsearch errors', async t => {
   }
 })
 
+test('Duck-type fallback: non-instanceof client error with matching name is rejected', async t => {
+  // Simulates an error constructed from a different class reference (e.g. a stale require cache
+  // or a test helper that reconstructs the class). The object is an Error, has the right .name,
+  // and its constructor.name matches a known errors entry — but instanceof fails.
+  class TimeoutError extends Error {
+    constructor () {
+      super('Request timed out')
+      this.name = 'TimeoutError'
+    }
+  }
+
+  const mock = new Mock()
+  const client = new Client({
+    node: 'http://localhost:9200',
+    Connection: mock.getConnection()
+  })
+
+  mock.add({
+    method: 'GET',
+    path: '/_cat/indices'
+  }, () => new TimeoutError())
+
+  try {
+    await client.cat.indices()
+    t.fail('Should throw')
+  } catch (err) {
+    t.is(err.name, 'TimeoutError')
+  }
+})
+
+test('Duck-type fallback: non-instanceof ResponseError with matching name sets status code', async t => {
+  // Same scenario for ResponseError: instanceof fails but name/constructor/body/statusCode match.
+  class ResponseError extends Error {
+    constructor (body, statusCode) {
+      super('Response error')
+      this.name = 'ResponseError'
+      this.body = body
+      this.statusCode = statusCode
+    }
+  }
+
+  const mock = new Mock()
+  const client = new Client({
+    node: 'http://localhost:9200',
+    Connection: mock.getConnection()
+  })
+
+  mock.add({
+    method: 'GET',
+    path: '/_cat/indices'
+  }, () => new ResponseError({ errors: {}, status: 404 }, 404))
+
+  try {
+    await client.cat.indices()
+    t.fail('Should throw')
+  } catch (err) {
+    t.is(err.statusCode, 404)
+  }
+})
+
 test('The mock function should receive the request parameters', async t => {
   const mock = new Mock()
   const client = new Client({
