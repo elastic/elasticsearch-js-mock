@@ -173,10 +173,10 @@ function buildConnectionClass (mocker) {
             statusCode = 404
           } else {
             payload = resolver(params)
-            if (payload instanceof ResponseError) {
+            if (isResponseError(payload)) {
               statusCode = payload.statusCode
               payload = payload.body
-            } else if (payload instanceof ElasticsearchClientError) {
+            } else if (isElasticsearchClientError(payload)) {
               return reject(payload)
             }
           }
@@ -214,7 +214,9 @@ function normalizeParams (params, callback) {
     querystring: { ...querystring.parse(params.querystring) }
   }
 
+  /* istanbul ignore next */
   const compression = (params.headers['Content-Encoding'] || params.headers['content-encoding']) === 'gzip'
+  /* istanbul ignore next */
   const type = params.headers['Content-Type'] || params.headers['content-type'] || ''
 
   if (isStream(params.body)) {
@@ -257,4 +259,26 @@ function isStream (obj) {
   return obj != null && typeof obj.pipe === 'function'
 }
 
+function isResponseError (payload) {
+  return payload instanceof ResponseError ||
+    (
+      isElasticsearchClientError(payload) &&
+      payload.name === ResponseError.name &&
+      typeof payload.statusCode === 'number' &&
+      'body' in payload
+    )
+}
+
+function isElasticsearchClientError (payload) {
+  if (payload instanceof ElasticsearchClientError) return true
+  if (!(payload instanceof Error)) return false
+
+  const ErrorClass = errors[payload.name]
+  return typeof ErrorClass === 'function' &&
+    payload.constructor != null &&
+    payload.constructor.name === ErrorClass.name
+}
+
+Mocker.errors = errors
 module.exports = Mocker
+module.exports.errors = errors

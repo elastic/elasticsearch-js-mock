@@ -17,9 +17,10 @@
  * under the License.
  */
 
-import { BaseConnection } from '@elastic/elasticsearch'
+import { BaseConnection, errors } from '@elastic/elasticsearch'
 
 declare class ClientMock {
+  static errors: typeof errors
   constructor()
   add(pattern: MockPattern, resolver: ResolverFn): ClientMock
   get(pattern: MockPattern): ResolverFn | null
@@ -28,7 +29,12 @@ declare class ClientMock {
   getConnection(): typeof BaseConnection
 }
 
-export declare type ResolverFn = (params: MockPattern) => Record<string, any> | string
+export declare type ResolverFn = (params: MockPattern) => ResolverResult
+
+export declare type ResolverResult =
+  | Record<string, any>
+  | string
+  | InstanceType<typeof errors.ElasticsearchClientError>
 
 export interface MockPattern {
   method: string | string[]
@@ -37,4 +43,5 @@ export interface MockPattern {
   body?: Record<string, any> | Record<string, any>[]
 }
 
+export { errors }
 export default ClientMock
